@@ -31,10 +31,18 @@ export class PolynomialLine {
     costPoints,
     epochs = 1000,
     learningRate = 0.01,
+    l2Lambda = 0.1,
+    targetWeight = 1,
+    outOfBoundsCost = 0.1,
+    degreeDecayFactor = 0.5,
   }: {
     costPoints: Array<{ x: number; y: number; cost: number }>
     epochs: number
-    learningRate: number
+    learningRate?: number
+    l2Lambda?: number
+    targetWeight?: number
+    outOfBoundsCost?: number
+    degreeDecayFactor?: number
   }): void {
     for (let epoch = 0; epoch < epochs; epoch++) {
       let gradients = new Array(this.W.length).fill(0)
@@ -42,9 +50,15 @@ export class PolynomialLine {
       // Calculate gradients for cost points
       for (const point of costPoints) {
         const y = this.evaluate(point.x)
-        const error = y - point.y
+        const dist = y - point.y
+
+        // We want the line to be encourage to go away from the cost point, so
+        // we as dist goes up, we want the impact on the gradient to go down
+        const gradientFactor = Math.min(1 / dist ** 2, 1)
+
         for (let i = 0; i < this.W.length; i++) {
-          gradients[i] += 2 * error * Math.pow(point.x, i) * point.cost
+          gradients[i] -=
+            Math.sign(dist) * gradientFactor * Math.pow(point.x, i) * point.cost
         }
       }
 
@@ -52,8 +66,28 @@ export class PolynomialLine {
       const y0 = this.evaluate(0)
       const y1 = this.evaluate(1)
       for (let i = 0; i < this.W.length; i++) {
-        gradients[i] += 2 * y0 * Math.pow(0, i)
-        gradients[i] += 2 * y1 * Math.pow(1, i)
+        gradients[i] += 2 * y0 * Math.pow(0, i) * targetWeight
+        gradients[i] += 2 * y1 * Math.pow(1, i) * targetWeight
+      }
+
+      // Penalize large values of y (nothing is allowed to go above 1 or below -1)
+      for (let x = 0; x <= 1; x += 0.1) {
+        const y = this.evaluate(x)
+        const cost = y ** 2 * outOfBoundsCost
+        for (let i = 0; i < this.W.length; i++) {
+          gradients[i] += 2 * Math.sign(y) * Math.pow(x, i) * cost
+        }
+      }
+
+      // Update weights with degree-dependent learning rate
+      for (let i = 0; i < this.W.length; i++) {
+        const degreeLearningRate = learningRate * Math.pow(degreeDecayFactor, i)
+        gradients[i] *= degreeLearningRate
+      }
+
+      // L2 regularization
+      for (let i = 0; i < this.W.length; i++) {
+        gradients[i] += 2 * l2Lambda * this.W[i]
       }
 
       // Update weights
