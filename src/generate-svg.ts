@@ -24,7 +24,7 @@ export function generateSVG({
       <circle 
         cx="${transformedPoint.x}" 
         cy="${transformedPoint.y}" 
-        r="0.005" 
+        r="${0.005 * transform.a}" 
         fill="${point.color}"
       />`
       })
@@ -39,7 +39,7 @@ export function generateSVG({
       const transformedPoint = applyToPoint(transform, { x, y: y })
       return `${transformedPoint.x},${transformedPoint.y}`
     })
-    return `<polyline points="${points.join(" ")}" fill="none" stroke="black" stroke-width="0.005" />`
+    return `<polyline points="${points.join(" ")}" fill="none" stroke="black" stroke-width="${0.005 * transform.a}" />`
   }
 
   function drawObstacles(obstacles: Obstacle[]): string {
@@ -56,7 +56,7 @@ export function generateSVG({
                 return `${transformedPoint.x},${transformedPoint.y}`
               })
               .join(" ")
-            return `<polygon points="${points}" stroke="red" fill="rgba(255,0,0,0.2)"  stroke-width="0.005" />`
+            return `<polygon points="${points}" stroke="red" fill="rgba(255,0,0,0.2)"  stroke-width="${0.005 * transform.a}" />`
           }
           case "line": {
             const [start, end] = obstacle.linePoints
@@ -75,7 +75,7 @@ export function generateSVG({
               x2="${transformedEnd.x}" 
               y2="${transformedEnd.y}" 
               stroke="red" 
-              stroke-width="${obstacle.width}"
+              stroke-width="${obstacle.width * transform.a}"
             />`
           }
         }
