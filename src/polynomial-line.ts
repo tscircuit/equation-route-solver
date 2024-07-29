@@ -1,4 +1,4 @@
-import type { Point } from "transformation-matrix"
+import type { Point } from "./types"
 
 /**
  * Represents a polynomial line of degree N, a polynomial line is given by...
@@ -98,8 +98,8 @@ export class PolynomialLine {
     }
   }
 
-  computeIntersectionsWithObstacles(
-    obstacles: Array<{ x1: number; x2: number; y1: number; y2: number }>,
+  computeIntersectionsWithSegments(
+    segments: Array<{ x1: number; x2: number; y1: number; y2: number }>,
   ): Point[] {
     const intersections: Point[] = []
 

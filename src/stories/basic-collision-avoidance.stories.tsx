@@ -32,23 +32,45 @@ const scenario: Scenario = {
 }
 
 export const Collision1 = () => {
-  const line = useMemo(() => new PolynomialLine(5), [])
+  const line = useMemo(() => {
+    const line = new PolynomialLine(5)
+    // create asymmetric initial condition
+    line.W[0] = 0.1
+    line.W[1] = -0.05
+    return line
+  }, [])
+  const costPoints = useMemo(() => [], [])
+  const t = useT({ stepTime: 200 })
 
-  const t = useT({ stepTime: 100 })
+  // Trim old cost points (TODO: might want to reduce cost randomly to avoid sudden switches, remove things with <0 cost)
+  // if (costPoints.length > 100) {
+  //   costPoints.splice(0, 100 - costPoints.length)
+  // }
+
+  const intersections = line
+    .computeIntersectionsWithSegments(
+      scenario.obstacles.flatMap((o) => {
+        if (o.obstacleType === "line") {
+          return o.linePoints.slice(0, -1).map((p, i) => ({
+            x1: p.x,
+            x2: o.linePoints[i + 1].x,
+            y1: p.y,
+            y2: o.linePoints[i + 1].y,
+          }))
+        } else {
+          // TODO
+          return []
+        }
+      }),
+    )
+    .map((p) => ({ x: p.x, y: p.y, cost: 1, color: "red" }))
 
   line.computeWeightsaUsingGradientDescent({
-    costPoints: [
-      { x: 0, y: 0, cost: 1 },
-      { x: 0, y: -0.1, cost: 1 },
-      { x: 0, y: -0.2, cost: 1 },
-      { x: 0, y: -0.3, cost: 1 },
-      { x: 0, y: 0.1, cost: 1 },
-      { x: 0, y: 0.2, cost: 1 },
-    ],
+    costPoints: [{ x: 0, y: 0, cost: 1 }],
     epochs: 10,
     learningRate: 0.1,
     l2Lambda: 0.01,
-    outOfBoundsCost: 10,
+    outOfBoundsCost: 100,
     degreeDecayFactor: 1,
     targetWeight: 10,
   })
@@ -60,7 +82,11 @@ export const Collision1 = () => {
       <div>
         t: {t}, W: [{line.W.map((a) => a.toFixed(4)).join(", ")}]
       </div>
-      <Visualization {...scenario} fn={fn} />
+      <Visualization
+        {...scenario}
+        points={scenario.points.concat(costPoints)}
+        fn={fn}
+      />
     </div>
   )
 }
