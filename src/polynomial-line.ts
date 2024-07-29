@@ -71,9 +71,10 @@ export class PolynomialLine {
       }
 
       // Penalize large values of y (nothing is allowed to go above 1 or below -1)
-      for (let x = 0; x <= 1; x += 0.1) {
+      const Q1 = 10
+      for (let x = -0.5; x <= 0.5; x += 1 / Q1) {
         const y = this.evaluate(x)
-        const cost = y ** 2 * outOfBoundsCost
+        const cost = (y ** 2 * outOfBoundsCost) / Q1
         for (let i = 0; i < this.W.length; i++) {
           gradients[i] += 2 * Math.sign(y) * Math.pow(x, i) * cost
         }

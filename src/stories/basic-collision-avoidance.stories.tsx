@@ -47,7 +47,7 @@ export const Collision1 = () => {
   return (
     <div>
       <div>
-        t: {t}, W: [{line.W.join(", ")}]
+        t: {t}, W: [{line.W.map((a) => a.toFixed(4)).join(", ")}]
       </div>
       <Visualization {...scenario} fn={fn} />
     </div>
