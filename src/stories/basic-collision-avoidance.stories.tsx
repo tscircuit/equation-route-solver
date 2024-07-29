@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { PolynomialLine } from "../polynomial-line"
-import type { Scenario } from "../types"
+import type { Point, Scenario } from "../types"
 import { generateRandomTestData } from "../util/generate-random-test-data"
 import useT from "./fixtures/use-t"
 import { Visualization } from "./fixtures/Visualization"
@@ -39,7 +39,7 @@ export const Collision1 = () => {
     line.W[1] = -0.05
     return line
   }, [])
-  const costPoints = useMemo(() => [], [])
+  const costPoints: Point[] = useMemo(() => [], [])
   const t = useT({ stepTime: 200 })
 
   // Trim old cost points (TODO: might want to reduce cost randomly to avoid sudden switches, remove things with <0 cost)
