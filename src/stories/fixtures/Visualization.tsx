@@ -2,9 +2,12 @@ import generateSVG from "../../generate-svg"
 import type { Scenario } from "../../types"
 import { SuperGrid } from "react-supergrid"
 import { useMouseMatrixTransform } from "use-mouse-matrix-transform"
+import { scale, translate, fromTriangles, compose } from "transformation-matrix"
 
 export const Visualization = (props: Scenario) => {
-  const { transform, ref } = useMouseMatrixTransform()
+  const { transform, ref } = useMouseMatrixTransform({
+    initialTransform: compose(scale(800, -800), translate(0.1, -0.9)),
+  })
   return (
     <div
       ref={ref}
