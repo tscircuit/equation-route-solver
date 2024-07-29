@@ -34,7 +34,7 @@ export function generateSVG({
   function drawFunction(fn: DrawFunction): string {
     const numPoints = 100
     const points = Array.from({ length: numPoints }, (_, i) => {
-      const x = i / (numPoints - 1)
+      const x = i / (numPoints - 1) - 0.5
       const y = fn(x)
       const transformedPoint = applyToPoint(transform, { x, y: y })
       return `${transformedPoint.x},${transformedPoint.y}`

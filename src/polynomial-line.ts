@@ -23,7 +23,7 @@ export class PolynomialLine {
   /**
    * Solve for the weights given the cost points (points to avoid)
    *
-   * Note that the line should always intersect (x=0, y=0) and (x=1, y=0), these
+   * Note that the line should always intersect (x=-0.5, y=0) and (x=0.5, y=0), these
    * are the target points
    *
    */
@@ -62,12 +62,12 @@ export class PolynomialLine {
         }
       }
 
-      // Calculate gradients for target points (0,0) and (1,0)
-      const y0 = this.evaluate(0)
-      const y1 = this.evaluate(1)
+      // Calculate gradients for target points (-0.5,0) and (0.5,0)
+      const yMinus05 = this.evaluate(-0.5)
+      const y05 = this.evaluate(0.5)
       for (let i = 0; i < this.W.length; i++) {
-        gradients[i] += 2 * y0 * Math.pow(0, i) * targetWeight
-        gradients[i] += 2 * y1 * Math.pow(1, i) * targetWeight
+        gradients[i] += 2 * yMinus05 * Math.pow(-0.5, i) * targetWeight
+        gradients[i] += 2 * y05 * Math.pow(0.5, i) * targetWeight
       }
 
       // Penalize large values of y (nothing is allowed to go above 1 or below -1)
