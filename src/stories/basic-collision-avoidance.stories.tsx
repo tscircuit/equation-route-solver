@@ -65,6 +65,8 @@ export const Collision1 = () => {
     )
     .map((p) => ({ x: p.x, y: p.y, cost: 1, color: "red" }))
 
+  costPoints.push(...intersections)
+
   line.computeWeightsaUsingGradientDescent({
     costPoints: [{ x: 0, y: 0, cost: 1 }],
     epochs: 10,
