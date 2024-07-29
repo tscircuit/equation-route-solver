@@ -6,7 +6,7 @@ import { scale, translate, fromTriangles, compose } from "transformation-matrix"
 
 export const Visualization = (props: Scenario) => {
   const { transform, ref } = useMouseMatrixTransform({
-    initialTransform: compose(scale(800, -800), translate(0.1, -0.9)),
+    initialTransform: compose(scale(800, -800), translate(0.1, -0.7)),
   })
   return (
     <div
