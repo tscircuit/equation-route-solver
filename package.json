@@ -1,0 +1,19 @@
+{
+  "name": "equation-route-solver",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "ladle dev"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "@ladle/react": "^4.1.0",
+    "@types/bun": "latest",
+    "react-supergrid": "^1.0.10",
+    "transformation-matrix": "^2.16.1",
+    "use-mouse-matrix-transform": "^1.1.13"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
