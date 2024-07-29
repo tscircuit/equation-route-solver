@@ -6,7 +6,7 @@ import type { Point } from "transformation-matrix"
  * y = W0 + W1x + W2x^2 + ... + Wnx^n
  *
  */
-class PolynomialLine {
+export class PolynomialLine {
   public W: number[]
   public degree: number
 
