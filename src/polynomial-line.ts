@@ -1,4 +1,5 @@
 import type { Point } from "./types"
+import { getLineIntersection } from "./util/get-line-intersection"
 
 /**
  * Represents a polynomial line of degree N, a polynomial line is given by...
@@ -103,7 +104,19 @@ export class PolynomialLine {
   ): Point[] {
     const intersections: Point[] = []
 
-    // TODO compute intersections
+    for (const segment of segments) {
+      const result = getLineIntersection(
+        this.evaluate.bind(this),
+        segment.x1,
+        segment.y1,
+        segment.x2,
+        segment.y2,
+      )
+
+      if (result !== null) {
+        intersections.push(...result.map(([x, y]) => ({ x, y })))
+      }
+    }
 
     return intersections
   }

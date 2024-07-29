@@ -33,14 +33,17 @@ const scenario: Scenario = {
 
 export const Collision1 = () => {
   const line = useMemo(() => {
-    const line = new PolynomialLine(5)
+    const line = new PolynomialLine(3)
     // create asymmetric initial condition
     line.W[0] = 0.1
     line.W[1] = -0.05
     return line
   }, [])
-  const costPoints: Point[] = useMemo(() => [], [])
-  const t = useT({ stepTime: 200 })
+  const costPoints: (Point & { cost: number })[] = useMemo(
+    () => [{ x: 0, y: 0, cost: 1 }],
+    [],
+  )
+  const t = useT({ stepTime: 1000 })
 
   // Trim old cost points (TODO: might want to reduce cost randomly to avoid sudden switches, remove things with <0 cost)
   // if (costPoints.length > 100) {
@@ -63,12 +66,12 @@ export const Collision1 = () => {
         }
       }),
     )
-    .map((p) => ({ x: p.x, y: p.y, cost: 1, color: "red" }))
+    .map((p) => ({ x: p.x, y: p.y, cost: 1, color: "purple" }))
 
   costPoints.push(...intersections)
 
   line.computeWeightsaUsingGradientDescent({
-    costPoints: [{ x: 0, y: 0, cost: 1 }],
+    costPoints,
     epochs: 10,
     learningRate: 0.1,
     l2Lambda: 0.01,
