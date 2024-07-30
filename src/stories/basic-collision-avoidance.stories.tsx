@@ -1,37 +1,57 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { PolynomialLine } from "../polynomial-line"
 import type { Obstacle, Point, Scenario } from "../types"
 import { generateRandomTestData } from "../util/generate-random-test-data"
 import useT from "./fixtures/use-t"
 import { Visualization } from "./fixtures/Visualization"
 import { getSegmentIntersection } from "../util/get-segment-intersection"
+import { getDistanceToSegment } from "../util/get-distance-to-segment"
 
-function computeFitPoints(costPoints: Point[]): Point[] {
-  const fitPoints: Point[] = []
-  for (const costPoint of costPoints) {
-    // To compute a fit point, we project in four directions from a cost
-    // point until we're no longer colliding with any obstacles
-    const m = costPoint.slope
-    if (m !== undefined) {
-      const angle = Math.atan(m) + Math.PI / 2
-      const coneSize = Math.PI / 8
-      for (let i = -coneSize / 2; i <= coneSize / 2; i += coneSize / 2) {
-        fitPoints.push(
-          {
-            x: costPoint.x + 0.05 * Math.cos(angle + (i * Math.PI) / 2),
-            y: costPoint.y + 0.05 * Math.sin(angle + (i * Math.PI) / 2),
-            color: "orange",
-          },
-          {
-            x: costPoint.x - 0.05 * Math.cos(angle + (i * Math.PI) / 2),
-            y: costPoint.y - 0.05 * Math.sin(angle + (i * Math.PI) / 2),
-            color: "orange",
-          },
-        )
-      }
+// function computeFitPoints(costPoints: Point[]): Point[] {
+//   const fitPoints: Point[] = []
+//   for (const costPoint of costPoints) {
+//     // To compute a fit point, we project in four directions from a cost
+//     // point until we're no longer colliding with any obstacles
+//     const m = costPoint.slope
+//     if (m !== undefined) {
+//       const angle = Math.atan(m) + Math.PI / 2
+//       const coneSize = Math.PI / 8
+//       for (let i = -coneSize / 2; i <= coneSize / 2; i += coneSize / 2) {
+//         fitPoints.push(
+//           {
+//             x: costPoint.x + 0.05 * Math.cos(angle + (i * Math.PI) / 2),
+//             y: costPoint.y + 0.05 * Math.sin(angle + (i * Math.PI) / 2),
+//             color: "orange",
+//           },
+//           {
+//             x: costPoint.x - 0.05 * Math.cos(angle + (i * Math.PI) / 2),
+//             y: costPoint.y - 0.05 * Math.sin(angle + (i * Math.PI) / 2),
+//             color: "orange",
+//           },
+//         )
+//       }
+//     }
+//   }
+//   return fitPoints
+// }
+
+const pickRandom = (arr: any[]) => {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+const pickRandomPercent = (arr: any[], percentToPick: number) => {
+  const numItems = arr.length
+  const numToPick = Math.floor(numItems * percentToPick)
+
+  // Pick without replacement
+  const pickedItems: any[] = []
+  while (pickedItems.length < numToPick) {
+    const item = pickRandom(arr)
+    if (!pickedItems.includes(item)) {
+      pickedItems.push(item)
     }
   }
-  return fitPoints
+  return pickedItems
 }
 
 /**
@@ -83,21 +103,58 @@ function computeFitPoints2(
       }
     })
 
-    // fitPoints.push({
-    //   ...midpoint,
-    //   color: isCollidingObstacle ? "blue" : "orange",
-    // })
+    const isCloseToObstacle = obstacles.some((o) => {
+      if (o.obstacleType === "line") {
+        const [op1, op2] = o.linePoints
 
-    if (!isCollidingObstacle) {
+        return (
+          getDistanceToSegment(midpoint, {
+            x1: op1.x,
+            y1: op1.y,
+            x2: op2.x,
+            y2: op2.y,
+          }) < 0.05
+        )
+      }
+    })
+
+    // Check if midpoint is close to any other fit point
+    const tooCloseToOtherFitPoint = fitPoints.some(
+      (p) => (midpoint.x - p.x) ** 2 + (midpoint.y - p.y) ** 2 < 0.02 ** 2,
+    )
+
+    if (
+      !isCollidingObstacle &&
+      !tooCloseToOtherFitPoint &&
+      !isCloseToObstacle
+    ) {
       fitPoints.push(midpoint)
+      return true
+    } else {
+      return false
     }
   }
 
   for (let i = 0; i < costPoints.length; i++) {
     const p1 = costPoints[i]
+    const costPointDistancesSq: [Point, number][] = []
     for (let j = i + 1; j < costPoints.length; j++) {
       const p2 = costPoints[j]
-      attemptToAddMidpoint(p1, p2)
+      costPointDistancesSq.push([p2, (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2])
+    }
+
+    // Sort cost point distances by distance
+    costPointDistancesSq.sort((a, b) => a[1] - b[1])
+
+    // Add midpoints between 5 closest cost points
+    let midPointsAdded = 0
+    for (const [p2] of costPointDistancesSq) {
+      if (attemptToAddMidpoint(p1, p2)) {
+        midPointsAdded++
+      }
+      if (midPointsAdded >= 5) {
+        break
+      }
     }
   }
 
@@ -142,8 +199,47 @@ const CollisionTester = ({
   solver: PolynomialLine
   optimizationMethod: "gradientDescent" | "svd"
 }) => {
+  const [done, setDone] = useState(false)
   const costPoints: (Point & { cost: number })[] = useMemo(
-    () => [{ x: 0, y: 0, cost: 1 }],
+    () => [
+      { x: 0, y: 0, cost: 1, color: "purple" },
+      // {
+      //   x: 0.5,
+      //   y: 0.5,
+      //   cost: 1,
+      //   color: "purple",
+      // },
+      // {
+      //   x: -0.5,
+      //   y: 0.5,
+      //   cost: 1,
+      //   color: "purple",
+      // },
+      // {
+      //   x: -0.5,
+      //   y: -0.5,
+      //   cost: 1,
+      //   color: "purple",
+      // },
+      // {
+      //   x: 0.5,
+      //   y: -0.5,
+      //   cost: 1,
+      //   color: "purple",
+      // },
+      {
+        x: 0,
+        y: -0.5,
+        cost: 1,
+        color: "purple",
+      },
+      {
+        x: 0,
+        y: 0.5,
+        cost: 1,
+        color: "purple",
+      },
+    ],
     [],
   )
   const t = useT({ stepTime: 100 })
@@ -173,37 +269,50 @@ const CollisionTester = ({
     )
     .map((p) => ({ x: p.x, y: p.y, cost: 1, slope: p.slope, color: "purple" }))
 
-  for (const intersection of intersections) {
-    let tooClose = false
-    for (const costPoint of costPoints) {
-      if (distance(intersection, costPoint) < 0.005) {
-        tooClose = true
-        break
-      }
-    }
-    if (!tooClose) {
-      costPoints.push(intersection)
-    }
-  }
-  let fitPoints: Point[] = []
+  const goesThroughTargets =
+    Math.abs(solver.evaluate(-0.5)) < 0.01 &&
+    Math.abs(solver.evaluate(0.5)) < 0.01
 
+  const complete = intersections.length === 0 && goesThroughTargets
+
+  if (complete && !done) {
+    setDone(true)
+  }
+
+  let fitPoints: Point[] = []
   // TODO only use for SVD
   fitPoints = computeFitPoints2(costPoints, scenario.obstacles)
 
-  if (!solver.W.some((w) => Number.isNaN(w))) {
-    if (optimizationMethod === "gradientDescent" || costPoints.length < 7) {
-      solver.computeWeightsUsingGradientDescent({
-        costPoints: costPoints.slice(-100),
-        epochs: 100,
-        learningRate: 0.05,
-        l2Lambda: 0.01,
-        outOfBoundsCost: 10,
-        degreeDecayFactor: 1,
-        targetWeight: 10,
-      })
-    } else if (optimizationMethod === "svd") {
-      // fitPoints = computeFitPoints2(costPoints, scenario.obstacles)
-      solver.computeWeightsWithSvd(fitPoints, 9)
+  if (!complete) {
+    for (const intersection of intersections) {
+      let tooClose = false
+      for (const costPoint of costPoints) {
+        if (distance(intersection, costPoint) < 0.005) {
+          tooClose = true
+          break
+        }
+      }
+      if (!tooClose) {
+        costPoints.push(intersection)
+      }
+    }
+
+    if (!solver.W.some((w) => Number.isNaN(w))) {
+      if (optimizationMethod === "gradientDescent" || costPoints.length < 10) {
+        solver.computeWeightsUsingGradientDescent({
+          costPoints: costPoints.slice(-100),
+          epochs: 100,
+          learningRate: 0.05,
+          l2Lambda: 0.01,
+          outOfBoundsCost: 10,
+          degreeDecayFactor: 1,
+          targetWeight: 10,
+        })
+      } else if (optimizationMethod === "svd") {
+        // fitPoints = computeFitPoints2(costPoints, scenario.obstacles)
+        // solver.computeWeightsWithSvd(fitPoints, 10)
+        solver.computeWeightsWithSvd(pickRandomPercent(fitPoints, 0.99), 5)
+      }
     }
   }
 
@@ -315,7 +424,7 @@ export const GradDeg20 = () => {
 
 export const SvdDeg6WithFitPoints = () => {
   const solver = useMemo(() => {
-    const solver = new PolynomialLine(30)
+    const solver = new PolynomialLine(6)
     // create asymmetric initial condition
     solver.W[0] = 0.01
     solver.W[1] = 0.001
