@@ -38,6 +38,8 @@ export function computeOptimalPoints(
       { x: endExt.x + perpDx * dCent, y: endExt.y + perpDy * dCent },
     ]
 
+    return corners
+
     // Compute optimal points for each edge
     const optimalPoints: Point[] = [
       ...computeEdgePoints(corners[0], corners[1]),

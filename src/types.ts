@@ -4,6 +4,7 @@ export interface Point {
   color?: string
   cost?: number
   slope?: number
+  nodeName?: string
 }
 export type LineObstacle = {
   obstacleType: "line"

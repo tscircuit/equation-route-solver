@@ -7,6 +7,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
+    "@dagrejs/graphlib": "^2.2.3",
     "@ladle/react": "^4.1.0",
     "@types/bun": "latest",
     "react-supergrid": "^1.0.10",

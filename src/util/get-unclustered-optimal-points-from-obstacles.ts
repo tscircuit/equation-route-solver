@@ -1,3 +1,4 @@
+import type { Obstacle, Point } from "../types"
 import { computeOptimalPoints } from "./compute-optimal-points"
 import { getDistanceToSegment } from "./get-distance-to-segment"
 
