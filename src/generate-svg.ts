@@ -24,7 +24,8 @@ export function generateSVG({
       <circle 
         cx="${transformedPoint.x}" 
         cy="${transformedPoint.y}" 
-        r="${0.005 * transform.a}" 
+        r="${0.004 * transform.a}" 
+        fill-opacity="0.8"
         fill="${point.color}"
       />`
       })

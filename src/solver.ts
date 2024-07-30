@@ -18,10 +18,8 @@ export class Solver {
 
   /**
    * Solve for the weights using Singular Value Decomposition (SVD)
-   *
-   * TODO THIS DOES NOT WORK- NEED TO TRANSLATE THE COST POINTS INTO FIT POINTS
    */
-  computeWeightsWithSvd(fitPoints: Point[]): void {
+  computeWeightsWithSvd(fitPoints: Point[], k?: number): void {
     const X: number[][] = []
     const y: number[] = []
 
@@ -54,12 +52,27 @@ export class Solver {
     // Perform SVD
     const { u, v, q } = SVD(X)
 
-    // Compute pseudo-inverse
-    const qInv = q.map((val) => (val !== 0 ? 1 / val : 0))
-    const vT = v[0].map((_, colIndex) => v.map((row) => row[colIndex]))
+    // Truncated SVD
+    // Determine k if not provided
+    if (k === undefined) {
+      // You can implement a method to choose k, e.g., based on explained variance
+      k = Math.min(X.length, X[0].length)
+    }
+
+    // Truncate to k components
+    const uTrunc = u.map((row) => row.slice(0, k))
+    const vTrunc = v.slice(0, k)
+    const qTrunc = q.slice(0, k)
+
+    // Compute truncated pseudo-inverse
+    const qInv = qTrunc.map((val) => (val !== 0 ? 1 / val : 0))
+    const vT = vTrunc[0].map((_, colIndex) =>
+      vTrunc.map((row) => row[colIndex]),
+    )
+
     const pseudoInverse = vT.map((row) =>
       row.map((_, i) =>
-        row.reduce((sum, vVal, j) => sum + vVal * qInv[j] * u[i][j], 0),
+        row.reduce((sum, vVal, j) => sum + vVal * qInv[j] * uTrunc[i][j], 0),
       ),
     )
 
@@ -67,6 +80,21 @@ export class Solver {
     this.W = pseudoInverse.map((row) =>
       row.reduce((sum, val, i) => sum + val * y[i], 0),
     )
+
+    // // Compute pseudo-inverse
+    // const qInv = q.map((val) => (val !== 0 ? 1 / val : 0))
+    // const vT = v[0].map((_, colIndex) => v.map((row) => row[colIndex]))
+
+    // const pseudoInverse = vT.map((row) =>
+    //   row.map((_, i) =>
+    //     row.reduce((sum, vVal, j) => sum + vVal * qInv[j] * u[i][j], 0),
+    //   ),
+    // )
+
+    // // Compute weights
+    // this.W = pseudoInverse.map((row) =>
+    //   row.reduce((sum, val, i) => sum + val * y[i], 0),
+    // )
   }
 
   /**
