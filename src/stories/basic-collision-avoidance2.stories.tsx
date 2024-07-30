@@ -232,6 +232,7 @@ const CollisionTester = ({
       if (optimizationMethod === "gradientDescent" || costPoints.length < 10) {
         solver.computeWeightsUsingGradientDescent({
           costPoints: costPoints.slice(-400),
+          fitPoints,
           epochs: 100,
           learningRate: 0.0001,
           l2Lambda: 0.01,

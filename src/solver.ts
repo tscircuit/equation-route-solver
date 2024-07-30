@@ -107,6 +107,7 @@ export class Solver {
   computeWeightsUsingGradientDescent({
     costPoints,
     fitPoints,
+    fitMultiplier = 1,
     epochs = 1000,
     learningRate = 0.01,
     l2Lambda = 0.1,
@@ -114,10 +115,11 @@ export class Solver {
     outOfBoundsCost = 0.1,
     degreeDecayFactor = 0.5,
   }: {
-    costPoints: Array<{ x: number; y: number; cost?: number }>
+    costPoints?: Array<{ x: number; y: number; cost?: number }>
     fitPoints?: Array<{ x: number; y: number; cost?: number }>
     epochs: number
     learningRate?: number
+    fitMultiplier?: number
     l2Lambda?: number
     targetWeight?: number
     outOfBoundsCost?: number
@@ -127,20 +129,34 @@ export class Solver {
       let gradients = new Array(this.W.length).fill(0)
 
       // Calculate gradients for cost points
-      for (const point of costPoints) {
-        const y = this.evaluate(point.x)
-        const dist = y - point.y
+      if (costPoints) {
+        for (const point of costPoints) {
+          const y = this.evaluate(point.x)
+          const dist = y - point.y
 
-        // We want the line to be encourage to go away from the cost point, so
-        // we as dist goes up, we want the impact on the gradient to go down
-        const gradientFactor = Math.min(1 / dist ** 2, 1)
+          // We want the line to be encourage to go away from the cost point, so
+          // we as dist goes up, we want the impact on the gradient to go down
+          const gradientFactor = Math.min(1 / dist ** 2, 1)
 
-        for (let i = 0; i < this.W.length; i++) {
-          gradients[i] -=
-            Math.sign(dist) *
-            gradientFactor *
-            Math.pow(point.x, i) *
-            (point.cost ?? 1)
+          for (let i = 0; i < this.W.length; i++) {
+            gradients[i] -=
+              Math.sign(dist) *
+              gradientFactor *
+              Math.pow(point.x, i) *
+              (point.cost ?? 1)
+          }
+        }
+      }
+
+      // Calculate gradients for fit points
+      if (fitPoints) {
+        for (const point of fitPoints) {
+          const y = this.evaluate(point.x)
+          const dist = y - point.y
+
+          for (let i = 0; i < this.W.length; i++) {
+            gradients[i] -= dist ** 2 * fitMultiplier
+          }
         }
       }
 

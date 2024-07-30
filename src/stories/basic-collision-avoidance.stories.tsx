@@ -301,10 +301,12 @@ const CollisionTester = ({
       if (optimizationMethod === "gradientDescent" || costPoints.length < 10) {
         solver.computeWeightsUsingGradientDescent({
           costPoints: costPoints.slice(-100),
+          fitPoints,
+          fitMultiplier: 1,
           epochs: 100,
           learningRate: 0.0001,
           l2Lambda: 0.001,
-          outOfBoundsCost: 10,
+          outOfBoundsCost: 100,
           degreeDecayFactor: 1,
           targetWeight: 10,
         })
