@@ -5,6 +5,19 @@ import { generateRandomTestData } from "../util/generate-random-test-data"
 import useT from "./fixtures/use-t"
 import { Visualization } from "./fixtures/Visualization"
 
+const targets = [
+  {
+    x: -0.5,
+    y: 0,
+    color: "green",
+  },
+  {
+    x: 0.5,
+    y: 0,
+    color: "green",
+  },
+]
+
 // const scenario: Scenario = {
 //   points: [
 //     {
@@ -50,7 +63,12 @@ import { Visualization } from "./fixtures/Visualization"
 const CollisionTester = ({
   scenario,
   solver,
-}: { scenario: Omit<Scenario, "fn">; solver: PolynomialLine }) => {
+  optimizationMethod,
+}: {
+  scenario: Omit<Scenario, "fn">
+  solver: PolynomialLine
+  optimizationMethod: "gradientDescent" | "svd"
+}) => {
   const costPoints: (Point & { cost: number })[] = useMemo(
     () => [{ x: 0, y: 0, cost: 1 }],
     [],
@@ -84,15 +102,21 @@ const CollisionTester = ({
 
   costPoints.push(...intersections)
 
-  solver.computeWeightsaUsingGradientDescent({
-    costPoints,
-    epochs: 10,
-    learningRate: 0.1,
-    l2Lambda: 0.01,
-    outOfBoundsCost: 100,
-    degreeDecayFactor: 1,
-    targetWeight: 10,
-  })
+  if (!solver.W.some((w) => Number.isNaN(w))) {
+    if (optimizationMethod === "gradientDescent" || costPoints.length < 7) {
+      solver.computeWeightsUsingGradientDescent({
+        costPoints: costPoints.slice(0, 100),
+        epochs: 100,
+        learningRate: 0.05,
+        l2Lambda: 0.01,
+        outOfBoundsCost: 10,
+        degreeDecayFactor: 1,
+        targetWeight: 10,
+      })
+    } else if (optimizationMethod === "svd") {
+      solver.computeWeightsWithSvd(costPoints.slice(0, 100))
+    }
+  }
 
   const fn = (x: number) => solver.evaluate(x)
 
@@ -110,9 +134,9 @@ const CollisionTester = ({
   )
 }
 
-export const Collision1 = () => {
+export const GradDeg5 = () => {
   const solver = useMemo(() => {
-    const solver = new PolynomialLine(20)
+    const solver = new PolynomialLine(5)
     // create asymmetric initial condition
     solver.W[0] = 0.01
     solver.W[1] = 0.001
@@ -121,19 +145,9 @@ export const Collision1 = () => {
   return (
     <CollisionTester
       solver={solver}
+      optimizationMethod="gradientDescent"
       scenario={{
-        points: [
-          {
-            x: -0.5,
-            y: 0,
-            color: "green",
-          },
-          {
-            x: 0.5,
-            y: 0,
-            color: "green",
-          },
-        ],
+        points: targets,
         obstacles: [
           {
             obstacleType: "line",
@@ -148,6 +162,14 @@ export const Collision1 = () => {
             linePoints: [
               { x: -0.2, y: 0.5 },
               { x: -0.1, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: -0.1, y: -0.3 },
+              { x: 0, y: 0 },
             ],
             width: 0.01,
           },
@@ -157,7 +179,7 @@ export const Collision1 = () => {
   )
 }
 
-export const Collision2 = () => {
+export const GradDeg20 = () => {
   const solver = useMemo(() => {
     const solver = new PolynomialLine(20)
     // create asymmetric initial condition
@@ -168,19 +190,9 @@ export const Collision2 = () => {
   return (
     <CollisionTester
       solver={solver}
+      optimizationMethod="gradientDescent"
       scenario={{
-        points: [
-          {
-            x: -0.5,
-            y: 0,
-            color: "green",
-          },
-          {
-            x: 0.5,
-            y: 0,
-            color: "green",
-          },
-        ],
+        points: targets,
         obstacles: [
           {
             obstacleType: "line",
@@ -201,8 +213,53 @@ export const Collision2 = () => {
           {
             obstacleType: "line",
             linePoints: [
-              { x: 0.2, y: 0.1 },
-              { x: 0.3, y: 0.3 },
+              { x: -0.1, y: -0.3 },
+              { x: 0, y: 0 },
+            ],
+            width: 0.01,
+          },
+        ],
+      }}
+    />
+  )
+}
+
+export const SvdDeg5 = () => {
+  const solver = useMemo(() => {
+    const solver = new PolynomialLine(5)
+    // create asymmetric initial condition
+    solver.W[0] = 0.01
+    solver.W[1] = 0.001
+    return solver
+  }, [])
+  return (
+    <CollisionTester
+      solver={solver}
+      optimizationMethod="svd"
+      scenario={{
+        points: targets,
+        obstacles: [
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: 0, y: -0.8 },
+              { x: 0, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: -0.2, y: 0.5 },
+              { x: -0.1, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: -0.1, y: -0.3 },
+              { x: 0, y: 0 },
             ],
             width: 0.01,
           },

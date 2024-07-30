@@ -10,6 +10,7 @@
     "@ladle/react": "^4.1.0",
     "@types/bun": "latest",
     "react-supergrid": "^1.0.10",
+    "svd-js": "^1.1.1",
     "transformation-matrix": "^2.16.1",
     "use-mouse-matrix-transform": "^1.1.13"
   },
