@@ -156,3 +156,58 @@ export const Collision1 = () => {
     />
   )
 }
+
+export const Collision2 = () => {
+  const solver = useMemo(() => {
+    const solver = new PolynomialLine(20)
+    // create asymmetric initial condition
+    solver.W[0] = 0.01
+    solver.W[1] = 0.001
+    return solver
+  }, [])
+  return (
+    <CollisionTester
+      solver={solver}
+      scenario={{
+        points: [
+          {
+            x: -0.5,
+            y: 0,
+            color: "green",
+          },
+          {
+            x: 0.5,
+            y: 0,
+            color: "green",
+          },
+        ],
+        obstacles: [
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: 0, y: -0.8 },
+              { x: 0, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: -0.2, y: 0.5 },
+              { x: -0.1, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: 0.2, y: 0.1 },
+              { x: 0.3, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+        ],
+      }}
+    />
+  )
+}
