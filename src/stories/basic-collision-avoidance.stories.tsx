@@ -23,7 +23,7 @@ const scenario: Scenario = {
     {
       obstacleType: "line",
       linePoints: [
-        { x: 0, y: -0.3 },
+        { x: 0, y: -0.8 },
         { x: 0, y: 0.3 },
       ],
       width: 0.01,
@@ -36,12 +36,20 @@ const scenario: Scenario = {
       ],
       width: 0.01,
     },
+    {
+      obstacleType: "line",
+      linePoints: [
+        { x: 0.2, y: 0.1 },
+        { x: 0.3, y: 0.3 },
+      ],
+      width: 0.01,
+    },
   ],
 }
 
 export const Collision1 = () => {
   const line = useMemo(() => {
-    const line = new PolynomialLine(5)
+    const line = new PolynomialLine(20)
     // create asymmetric initial condition
     line.W[0] = 0.01
     line.W[1] = 0.001
