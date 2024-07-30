@@ -4,7 +4,7 @@ import { SuperGrid } from "react-supergrid"
 import { useMouseMatrixTransform } from "use-mouse-matrix-transform"
 import { scale, translate, fromTriangles, compose } from "transformation-matrix"
 
-export const Visualization = (props: Scenario) => {
+export const Visualization = (props: Partial<Scenario>) => {
   const { transform, ref } = useMouseMatrixTransform({
     initialTransform: compose(scale(800, -800), translate(0.6, -0.7)),
   })

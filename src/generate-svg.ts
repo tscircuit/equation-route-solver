@@ -8,9 +8,9 @@ export function generateSVG({
   obstacles,
   transform,
 }: {
-  points: Point[]
-  fn: DrawFunction
-  obstacles: Obstacle[]
+  points?: Point[]
+  fn?: DrawFunction
+  obstacles?: Obstacle[]
   transform: Matrix
 }): string {
   function drawPoints(points: Point[]): string {
@@ -86,9 +86,9 @@ export function generateSVG({
 
   const svgContent = `
     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-      ${drawFunction(fn)}
-      ${drawObstacles(obstacles)}
-      ${drawPoints(points)}
+      ${fn && drawFunction(fn)}
+      ${obstacles && drawObstacles(obstacles)}
+      ${points && drawPoints(points)}
     </svg>
   `
 

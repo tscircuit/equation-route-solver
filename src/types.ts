@@ -5,13 +5,19 @@ export interface Point {
   cost?: number
   slope?: number
 }
-export type DrawFunction = (x: number) => number
+export type LineObstacle = {
+  obstacleType: "line"
+  linePoints: Point[]
+  width: number
+}
 export type Obstacle =
   | { obstacleType: "polygon"; points: Point[] }
-  | { obstacleType: "line"; linePoints: Point[]; width: number }
+  | LineObstacle
 
 export type Scenario = {
   points: Point[]
   fn: DrawFunction
   obstacles: Obstacle[]
 }
+
+export type DrawFunction = (x: number) => number
