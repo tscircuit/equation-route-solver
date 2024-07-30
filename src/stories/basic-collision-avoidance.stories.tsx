@@ -18,47 +18,9 @@ const targets = [
   },
 ]
 
-// const scenario: Scenario = {
-//   points: [
-//     {
-//       x: -0.5,
-//       y: 0,
-//       color: "green",
-//     },
-//     {
-//       x: 0.5,
-//       y: 0,
-//       color: "green",
-//     },
-//   ],
-//   fn: (x) => 0,
-//   obstacles: [
-//     {
-//       obstacleType: "line",
-//       linePoints: [
-//         { x: 0, y: -0.8 },
-//         { x: 0, y: 0.3 },
-//       ],
-//       width: 0.01,
-//     },
-//     {
-//       obstacleType: "line",
-//       linePoints: [
-//         { x: -0.2, y: 0.5 },
-//         { x: -0.1, y: 0.3 },
-//       ],
-//       width: 0.01,
-//     },
-//     {
-//       obstacleType: "line",
-//       linePoints: [
-//         { x: 0.2, y: 0.1 },
-//         { x: 0.3, y: 0.3 },
-//       ],
-//       width: 0.01,
-//     },
-//   ],
-// }
+const distance = (p1: Point, p2: Point): number => {
+  return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
+}
 
 const CollisionTester = ({
   scenario,
@@ -98,9 +60,21 @@ const CollisionTester = ({
         }
       }),
     )
-    .map((p) => ({ x: p.x, y: p.y, cost: 1, color: "purple" }))
+    .map((p) => ({ x: p.x, y: p.y, cost: 1, slope: p.slope, color: "purple" }))
 
-  costPoints.push(...intersections)
+  for (const intersection of intersections) {
+    let tooClose = false
+    for (const costPoint of costPoints) {
+      if (distance(intersection, costPoint) < 0.005) {
+        tooClose = true
+        break
+      }
+    }
+    if (!tooClose) {
+      costPoints.push(intersection)
+    }
+  }
+  let fitPoints: Point[] = []
 
   if (!solver.W.some((w) => Number.isNaN(w))) {
     if (optimizationMethod === "gradientDescent" || costPoints.length < 7) {
@@ -114,7 +88,30 @@ const CollisionTester = ({
         targetWeight: 10,
       })
     } else if (optimizationMethod === "svd") {
-      solver.computeWeightsWithSvd(costPoints.slice(0, 100))
+      for (const costPoint of costPoints) {
+        // To compute a fit point, we project in four directions from a cost
+        // point until we're no longer colliding with any obstacles
+        const m = costPoint.slope
+        if (m !== undefined) {
+          const angle = Math.atan(m) + Math.PI / 2
+          const coneSize = Math.PI / 8
+          for (let i = -coneSize / 2; i <= coneSize / 2; i += coneSize / 2) {
+            fitPoints.push(
+              {
+                x: costPoint.x + 0.05 * Math.cos(angle + (i * Math.PI) / 2),
+                y: costPoint.y + 0.05 * Math.sin(angle + (i * Math.PI) / 2),
+                color: "orange",
+              },
+              {
+                x: costPoint.x - 0.05 * Math.cos(angle + (i * Math.PI) / 2),
+                y: costPoint.y - 0.05 * Math.sin(angle + (i * Math.PI) / 2),
+                color: "orange",
+              },
+            )
+          }
+        }
+      }
+      solver.computeWeightsWithSvd(fitPoints)
     }
   }
 
@@ -127,7 +124,7 @@ const CollisionTester = ({
       </div>
       <Visualization
         {...scenario}
-        points={scenario.points.concat(costPoints)}
+        points={scenario.points.concat(costPoints).concat(fitPoints)}
         fn={fn}
       />
     </div>
@@ -224,9 +221,9 @@ export const GradDeg20 = () => {
   )
 }
 
-export const SvdDeg5 = () => {
+export const SvdDeg6WithFitPoints = () => {
   const solver = useMemo(() => {
-    const solver = new PolynomialLine(5)
+    const solver = new PolynomialLine(6)
     // create asymmetric initial condition
     solver.W[0] = 0.01
     solver.W[1] = 0.001

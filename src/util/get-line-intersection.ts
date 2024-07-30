@@ -15,7 +15,7 @@ export function getLineIntersection(
   y1: number,
   x2: number,
   y2: number,
-): [number, number][] | null {
+): [number, number, number][] | null {
   // Step 1: Find the line equation y = mx + b
   let m = (y2 - y1) / (x2 - x1)
   if (m === Infinity || m === -Infinity) {
@@ -23,7 +23,7 @@ export function getLineIntersection(
     // vertical line
     const y = fn(x1)
     if (y > Math.min(y1, y2) && y < Math.max(y1, y2)) {
-      return [[x1, y]]
+      return [[x1, y, 999]]
     }
     return []
   }
@@ -44,7 +44,7 @@ export function getLineIntersection(
   // Step 4: Check if roots are within the line segment
   const intersections = roots
     .filter((x) => x >= Math.min(x1, x2) && x <= Math.max(x1, x2))
-    .map((x) => [x, m * x + b] as [number, number])
+    .map((x) => [x, m * x + b, m] as [number, number, number])
 
   return intersections.length > 0 ? intersections : null
 }

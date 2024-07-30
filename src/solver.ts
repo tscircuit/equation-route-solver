@@ -21,7 +21,7 @@ export class Solver {
    *
    * TODO THIS DOES NOT WORK- NEED TO TRANSLATE THE COST POINTS INTO FIT POINTS
    */
-  computeWeightsWithSvd(points: Point[]): void {
+  computeWeightsWithSvd(fitPoints: Point[]): void {
     const X: number[][] = []
     const y: number[] = []
 
@@ -34,7 +34,7 @@ export class Solver {
     }
 
     // Add cost points
-    for (const point of points) {
+    for (const point of fitPoints) {
       const row = [1]
       for (let i = 1; i <= this.degree; i++) {
         row.push(Math.pow(point.x, i))
@@ -45,7 +45,7 @@ export class Solver {
 
     if (X.length < X[0].length) {
       return this.computeWeightsUsingGradientDescent({
-        costPoints: points,
+        costPoints: fitPoints,
         epochs: 1,
         learningRate: 0.01,
       })
@@ -165,10 +165,14 @@ export class Solver {
       )
 
       if (result !== null) {
-        intersections.push(...result.map(([x, y]) => ({ x, y })))
+        intersections.push(...result.map(([x, y, m]) => ({ x, y, slope: m })))
       }
     }
 
     return intersections
+  }
+
+  evaluate(x: number): number {
+    return 0
   }
 }

@@ -3,6 +3,7 @@ export interface Point {
   y: number
   color?: string
   cost?: number
+  slope?: number
 }
 export type DrawFunction = (x: number) => number
 export type Obstacle =
