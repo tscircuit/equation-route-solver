@@ -5,56 +5,52 @@ import { generateRandomTestData } from "../util/generate-random-test-data"
 import useT from "./fixtures/use-t"
 import { Visualization } from "./fixtures/Visualization"
 
-const scenario: Scenario = {
-  points: [
-    {
-      x: -0.5,
-      y: 0,
-      color: "green",
-    },
-    {
-      x: 0.5,
-      y: 0,
-      color: "green",
-    },
-  ],
-  fn: (x) => 0,
-  obstacles: [
-    {
-      obstacleType: "line",
-      linePoints: [
-        { x: 0, y: -0.8 },
-        { x: 0, y: 0.3 },
-      ],
-      width: 0.01,
-    },
-    {
-      obstacleType: "line",
-      linePoints: [
-        { x: -0.2, y: 0.5 },
-        { x: -0.1, y: 0.3 },
-      ],
-      width: 0.01,
-    },
-    {
-      obstacleType: "line",
-      linePoints: [
-        { x: 0.2, y: 0.1 },
-        { x: 0.3, y: 0.3 },
-      ],
-      width: 0.01,
-    },
-  ],
-}
+// const scenario: Scenario = {
+//   points: [
+//     {
+//       x: -0.5,
+//       y: 0,
+//       color: "green",
+//     },
+//     {
+//       x: 0.5,
+//       y: 0,
+//       color: "green",
+//     },
+//   ],
+//   fn: (x) => 0,
+//   obstacles: [
+//     {
+//       obstacleType: "line",
+//       linePoints: [
+//         { x: 0, y: -0.8 },
+//         { x: 0, y: 0.3 },
+//       ],
+//       width: 0.01,
+//     },
+//     {
+//       obstacleType: "line",
+//       linePoints: [
+//         { x: -0.2, y: 0.5 },
+//         { x: -0.1, y: 0.3 },
+//       ],
+//       width: 0.01,
+//     },
+//     {
+//       obstacleType: "line",
+//       linePoints: [
+//         { x: 0.2, y: 0.1 },
+//         { x: 0.3, y: 0.3 },
+//       ],
+//       width: 0.01,
+//     },
+//   ],
+// }
 
-export const Collision1 = () => {
-  const line = useMemo(() => {
-    const line = new PolynomialLine(20)
-    // create asymmetric initial condition
-    line.W[0] = 0.01
-    line.W[1] = 0.001
-    return line
-  }, [])
+const CollisionTester = ({
+  scenario,
+  solver,
+}: { scenario: Omit<Scenario, "fn">; solver: PolynomialLine }) => {
   const costPoints: (Point & { cost: number })[] = useMemo(
     () => [{ x: 0, y: 0, cost: 1 }],
     [],
@@ -68,7 +64,7 @@ export const Collision1 = () => {
     costPoints.splice(0, 100 - costPoints.length)
   }
 
-  const intersections = line
+  const intersections = solver
     .computeIntersectionsWithSegments(
       scenario.obstacles.flatMap((o) => {
         if (o.obstacleType === "line") {
@@ -88,7 +84,7 @@ export const Collision1 = () => {
 
   costPoints.push(...intersections)
 
-  line.computeWeightsaUsingGradientDescent({
+  solver.computeWeightsaUsingGradientDescent({
     costPoints,
     epochs: 10,
     learningRate: 0.1,
@@ -98,12 +94,12 @@ export const Collision1 = () => {
     targetWeight: 10,
   })
 
-  const fn = (x: number) => line.evaluate(x)
+  const fn = (x: number) => solver.evaluate(x)
 
   return (
     <div>
       <div>
-        t: {t}, W: [{line.W.map((a) => a.toFixed(4)).join(", ")}]
+        t: {t}, W: [{solver.W.map((a) => a.toFixed(4)).join(", ")}]
       </div>
       <Visualization
         {...scenario}
@@ -111,5 +107,52 @@ export const Collision1 = () => {
         fn={fn}
       />
     </div>
+  )
+}
+
+export const Collision1 = () => {
+  const solver = useMemo(() => {
+    const solver = new PolynomialLine(20)
+    // create asymmetric initial condition
+    solver.W[0] = 0.01
+    solver.W[1] = 0.001
+    return solver
+  }, [])
+  return (
+    <CollisionTester
+      solver={solver}
+      scenario={{
+        points: [
+          {
+            x: -0.5,
+            y: 0,
+            color: "green",
+          },
+          {
+            x: 0.5,
+            y: 0,
+            color: "green",
+          },
+        ],
+        obstacles: [
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: 0, y: -0.8 },
+              { x: 0, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+          {
+            obstacleType: "line",
+            linePoints: [
+              { x: -0.2, y: 0.5 },
+              { x: -0.1, y: 0.3 },
+            ],
+            width: 0.01,
+          },
+        ],
+      }}
+    />
   )
 }
