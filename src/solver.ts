@@ -106,6 +106,7 @@ export class Solver {
    */
   computeWeightsUsingGradientDescent({
     costPoints,
+    fitPoints,
     epochs = 1000,
     learningRate = 0.01,
     l2Lambda = 0.1,
@@ -114,6 +115,7 @@ export class Solver {
     degreeDecayFactor = 0.5,
   }: {
     costPoints: Array<{ x: number; y: number; cost?: number }>
+    fitPoints?: Array<{ x: number; y: number; cost?: number }>
     epochs: number
     learningRate?: number
     l2Lambda?: number
@@ -161,9 +163,11 @@ export class Solver {
       }
 
       // Update weights with degree-dependent learning rate
-      for (let i = 0; i < this.W.length; i++) {
-        const degreeLearningRate = learningRate * Math.pow(degreeDecayFactor, i)
-        gradients[i] *= degreeLearningRate
+      if (degreeDecayFactor !== 1) {
+        for (let i = 0; i < this.W.length; i++) {
+          const degreeLearningRate = Math.pow(degreeDecayFactor, i)
+          gradients[i] *= degreeLearningRate
+        }
       }
 
       // L2 regularization

@@ -6,53 +6,8 @@ import useT from "./fixtures/use-t"
 import { Visualization } from "./fixtures/Visualization"
 import { getSegmentIntersection } from "../util/get-segment-intersection"
 import { getDistanceToSegment } from "../util/get-distance-to-segment"
-
-// function computeFitPoints(costPoints: Point[]): Point[] {
-//   const fitPoints: Point[] = []
-//   for (const costPoint of costPoints) {
-//     // To compute a fit point, we project in four directions from a cost
-//     // point until we're no longer colliding with any obstacles
-//     const m = costPoint.slope
-//     if (m !== undefined) {
-//       const angle = Math.atan(m) + Math.PI / 2
-//       const coneSize = Math.PI / 8
-//       for (let i = -coneSize / 2; i <= coneSize / 2; i += coneSize / 2) {
-//         fitPoints.push(
-//           {
-//             x: costPoint.x + 0.05 * Math.cos(angle + (i * Math.PI) / 2),
-//             y: costPoint.y + 0.05 * Math.sin(angle + (i * Math.PI) / 2),
-//             color: "orange",
-//           },
-//           {
-//             x: costPoint.x - 0.05 * Math.cos(angle + (i * Math.PI) / 2),
-//             y: costPoint.y - 0.05 * Math.sin(angle + (i * Math.PI) / 2),
-//             color: "orange",
-//           },
-//         )
-//       }
-//     }
-//   }
-//   return fitPoints
-// }
-
-const pickRandom = (arr: any[]) => {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
-
-const pickRandomPercent = (arr: any[], percentToPick: number) => {
-  const numItems = arr.length
-  const numToPick = Math.floor(numItems * percentToPick)
-
-  // Pick without replacement
-  const pickedItems: any[] = []
-  while (pickedItems.length < numToPick) {
-    const item = pickRandom(arr)
-    if (!pickedItems.includes(item)) {
-      pickedItems.push(item)
-    }
-  }
-  return pickedItems
-}
+import { PolynomialSegmentSolver } from "../polynomial-segment-solver"
+import type { Solver } from "../solver"
 
 /**
  * Select midpoints of costPoints that don't collide with obstacles
@@ -196,37 +151,13 @@ const CollisionTester = ({
   optimizationMethod,
 }: {
   scenario: Omit<Scenario, "fn">
-  solver: PolynomialLine
+  solver: Solver
   optimizationMethod: "gradientDescent" | "svd"
 }) => {
   const [done, setDone] = useState(false)
   const costPoints: (Point & { cost: number })[] = useMemo(
     () => [
       { x: 0, y: 0, cost: 1, color: "purple" },
-      // {
-      //   x: 0.5,
-      //   y: 0.5,
-      //   cost: 1,
-      //   color: "purple",
-      // },
-      // {
-      //   x: -0.5,
-      //   y: 0.5,
-      //   cost: 1,
-      //   color: "purple",
-      // },
-      // {
-      //   x: -0.5,
-      //   y: -0.5,
-      //   cost: 1,
-      //   color: "purple",
-      // },
-      // {
-      //   x: 0.5,
-      //   y: -0.5,
-      //   cost: 1,
-      //   color: "purple",
-      // },
       {
         x: 0,
         y: -0.5,
@@ -300,18 +231,14 @@ const CollisionTester = ({
     if (!solver.W.some((w) => Number.isNaN(w))) {
       if (optimizationMethod === "gradientDescent" || costPoints.length < 10) {
         solver.computeWeightsUsingGradientDescent({
-          costPoints: costPoints.slice(-100),
+          costPoints: costPoints.slice(-400),
           epochs: 100,
           learningRate: 0.0001,
-          l2Lambda: 0.001,
+          l2Lambda: 0.01,
           outOfBoundsCost: 10,
           degreeDecayFactor: 1,
           targetWeight: 10,
         })
-      } else if (optimizationMethod === "svd") {
-        // fitPoints = computeFitPoints2(costPoints, scenario.obstacles)
-        // solver.computeWeightsWithSvd(fitPoints, 10)
-        solver.computeWeightsWithSvd(pickRandomPercent(fitPoints, 0.99), 5)
       }
     }
   }
@@ -334,7 +261,7 @@ const CollisionTester = ({
 
 export const GradDeg5 = () => {
   const solver = useMemo(() => {
-    const solver = new PolynomialLine(5)
+    const solver = new PolynomialSegmentSolver(5)
     // create asymmetric initial condition
     solver.W[0] = 0.01
     solver.W[1] = 0.001
@@ -344,96 +271,6 @@ export const GradDeg5 = () => {
     <CollisionTester
       solver={solver}
       optimizationMethod="gradientDescent"
-      scenario={{
-        points: targets,
-        obstacles: [
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: 0, y: -0.8 },
-              { x: 0, y: 0.3 },
-            ],
-            width: 0.01,
-          },
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: -0.2, y: 0.5 },
-              { x: -0.1, y: 0.3 },
-            ],
-            width: 0.01,
-          },
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: -0.1, y: -0.3 },
-              { x: 0, y: 0 },
-            ],
-            width: 0.01,
-          },
-        ],
-      }}
-    />
-  )
-}
-
-export const GradDeg20 = () => {
-  const solver = useMemo(() => {
-    const solver = new PolynomialLine(20)
-    // create asymmetric initial condition
-    solver.W[0] = 0.01
-    solver.W[1] = 0.001
-    return solver
-  }, [])
-  return (
-    <CollisionTester
-      solver={solver}
-      optimizationMethod="gradientDescent"
-      scenario={{
-        points: targets,
-        obstacles: [
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: 0, y: -0.8 },
-              { x: 0, y: 0.3 },
-            ],
-            width: 0.01,
-          },
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: -0.2, y: 0.5 },
-              { x: -0.1, y: 0.3 },
-            ],
-            width: 0.01,
-          },
-          {
-            obstacleType: "line",
-            linePoints: [
-              { x: -0.1, y: -0.3 },
-              { x: 0, y: 0 },
-            ],
-            width: 0.01,
-          },
-        ],
-      }}
-    />
-  )
-}
-
-export const SvdDeg6WithFitPoints = () => {
-  const solver = useMemo(() => {
-    const solver = new PolynomialLine(6)
-    // create asymmetric initial condition
-    solver.W[0] = 0.01
-    solver.W[1] = 0.001
-    return solver
-  }, [])
-  return (
-    <CollisionTester
-      solver={solver}
-      optimizationMethod="svd"
       scenario={{
         points: targets,
         obstacles: [
