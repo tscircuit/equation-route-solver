@@ -18,7 +18,6 @@ export function findRootsNewtonRaphson(
 
   for (let i = 0; i <= samples; i++) {
     let x = a + (b - a) * (i / samples)
-    console.log(i, x, a, b)
     for (let j = 0; j < maxIterations; j++) {
       const fx = f(x)
       if (Math.abs(fx) < epsilon) {

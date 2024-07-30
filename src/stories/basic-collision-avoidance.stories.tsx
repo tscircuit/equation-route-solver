@@ -28,27 +28,37 @@ const scenario: Scenario = {
       ],
       width: 0.01,
     },
+    {
+      obstacleType: "line",
+      linePoints: [
+        { x: -0.2, y: 0.5 },
+        { x: -0.1, y: 0.3 },
+      ],
+      width: 0.01,
+    },
   ],
 }
 
 export const Collision1 = () => {
   const line = useMemo(() => {
-    const line = new PolynomialLine(3)
+    const line = new PolynomialLine(5)
     // create asymmetric initial condition
-    line.W[0] = 0.1
-    line.W[1] = -0.05
+    line.W[0] = 0.01
+    line.W[1] = 0.001
     return line
   }, [])
   const costPoints: (Point & { cost: number })[] = useMemo(
     () => [{ x: 0, y: 0, cost: 1 }],
     [],
   )
-  const t = useT({ stepTime: 1000 })
+  const t = useT({ stepTime: 100 })
 
   // Trim old cost points (TODO: might want to reduce cost randomly to avoid sudden switches, remove things with <0 cost)
-  // if (costPoints.length > 100) {
-  //   costPoints.splice(0, 100 - costPoints.length)
-  // }
+  // trimming old cost points really only works w/ gradient descent models where the line
+  // has started to avoid the old cost points
+  if (costPoints.length > 100) {
+    costPoints.splice(0, 100 - costPoints.length)
+  }
 
   const intersections = line
     .computeIntersectionsWithSegments(

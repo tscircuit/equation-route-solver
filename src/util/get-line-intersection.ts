@@ -40,7 +40,6 @@ export function getLineIntersection(
     Math.min(x1, x2) - 0.01,
     Math.max(x1, x2) + 0.01,
   )
-  console.log({ roots })
 
   // Step 4: Check if roots are within the line segment
   const intersections = roots
