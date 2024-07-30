@@ -3,6 +3,7 @@ import { Visualization } from "./fixtures/Visualization"
 import { computeOptimalPoints } from "../util/compute-optimal-points"
 import type { LineObstacle, Obstacle, Point } from "../types"
 import { getDistanceToSegment } from "../util/get-distance-to-segment"
+import { getUnclusteredOptimalPointsFromObstacles } from "../util/get-unclustered-optimal-points-from-obstacles"
 
 const targets = [
   {
@@ -48,73 +49,14 @@ export const BFSOptimalPoints = () => {
     ] as LineObstacle[],
   }
 
-  let optimalPoints = scenario.obstacles
-    .flatMap((obstacle: LineObstacle) => computeOptimalPoints(obstacle, 0.02))
-    // Remove points that are too close to obstacles
-    .filter((p) => {
-      for (const obstacle of scenario.obstacles) {
-        if (obstacle.obstacleType === "line") {
-          const [start, end] = obstacle.linePoints
-          if (
-            getDistanceToSegment(p, {
-              x1: start.x,
-              y1: start.y,
-              x2: end.x,
-              y2: end.y,
-            }) < 0.02
-          ) {
-            return false
-          }
-        }
-      }
-      return true
-    })
-
-  // Remove optimal points that are too close to other optimal points
-  const unclusteredOptimalPoints: Array<Point & { count: number }> = []
-  for (let i = 0; i < optimalPoints.length; i++) {
-    const p1 = optimalPoints[i]
-    let closePoint: (Point & { count: number }) | null = null
-
-    for (let j = 0; j < unclusteredOptimalPoints.length; j++) {
-      const p2 = unclusteredOptimalPoints[j]
-      const dsq = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2
-      if (dsq < 0.02 ** 2) {
-        closePoint = p2
-        break
-      }
-    }
-
-    if (!closePoint) {
-      unclusteredOptimalPoints.push({ ...p1, count: 1 })
-    } else if (closePoint) {
-      closePoint.x =
-        (closePoint.x * closePoint.count + p1.x) / (closePoint.count + 1)
-      closePoint.y =
-        (closePoint.y * closePoint.count + p1.y) / (closePoint.count + 1)
-      closePoint.count += 1
-    }
-
-    // for (let j = i + 1; j < optimalPoints.length; j++) {
-    //   const p2 = optimalPoints[j]
-    //   const dsq = (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2
-    //   if (dsq < 0.02 ** 2) {
-    //     closePoint = p2
-    //     break
-    //   }
-    // }
-    // if (!closePoint) {
-    //   unclusteredOptimalPoints.push(p1)
-    // } else if (closePoint) {
-
-    // }
-  }
-
   return (
     <Visualization
       obstacles={scenario.obstacles}
-      fn={() => 0}
-      points={unclusteredOptimalPoints.map((p) => ({ ...p, color: "blue" }))}
+      points={scenario.points.concat(
+        getUnclusteredOptimalPointsFromObstacles(scenario.obstacles, 0.02).map(
+          (p) => ({ ...p, color: "blue" }),
+        ),
+      )}
     />
   )
 }
