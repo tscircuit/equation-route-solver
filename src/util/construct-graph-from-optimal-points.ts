@@ -7,7 +7,9 @@ export const constructGraphFromOptimalPoints = (
   obstacles: LineObstacle[],
 ): Graph => {
   // Construct a graph from every point that can reach every other point
-  const G = new Graph()
+  const G = new Graph({
+    directed: false,
+  })
   for (let i = 0; i < optimalPoints.length; i++) {
     G.setNode(i.toString(), { x: optimalPoints[i].x, y: optimalPoints[i].y })
   }
