@@ -14,29 +14,32 @@ export function getSegmentIntersection(
 ): [number, number] | null {
   const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
   if (denom === 0) {
-    // Lines are parallel
+    // Parallel segments intersect only when they share a supporting line.
+    // Check both directions so point segments are handled as well.
+    if (
+      (x3 - x1) * (y2 - y1) !== (y3 - y1) * (x2 - x1) ||
+      (x1 - x3) * (y4 - y3) !== (y1 - y3) * (x4 - x3)
+    ) {
+      return null
+    }
 
-    if (x1 !== x2 && x3 !== x4) {
-      const l1minx = Math.min(x1, x2)
-      const l1maxx = Math.max(x1, x2)
-      const l2minx = Math.min(x3, x4)
-      const l2maxx = Math.max(x3, x4)
-      if (l1minx <= l2maxx && l1maxx >= l2minx) {
-        // Lines overlap
-        return [l1minx, l1minx]
-      }
-    } else {
-      const l1miny = Math.min(y1, y2)
-      const l1maxy = Math.max(y1, y2)
-      const l2miny = Math.min(y3, y4)
-      const l2maxy = Math.max(y3, y4)
-      if (l1miny <= l2maxy && l1maxy >= l2miny) {
-        // Lines overlap
-        return [l1miny, l1miny]
+    // A nonempty collinear overlap contains at least one of the four endpoints.
+    for (const [x, y] of [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]) {
+      if (
+        x >= Math.min(x1, x2) &&
+        x <= Math.max(x1, x2) &&
+        y >= Math.min(y1, y2) &&
+        y <= Math.max(y1, y2) &&
+        x >= Math.min(x3, x4) &&
+        x <= Math.max(x3, x4) &&
+        y >= Math.min(y3, y4) &&
+        y <= Math.max(y3, y4)
+      ) {
+        return [x, y]
       }
     }
 
-    return null // Parallel, but not overlapping
+    return null
   }
 
   const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom
